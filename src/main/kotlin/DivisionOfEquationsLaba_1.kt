@@ -31,7 +31,7 @@ fun polyShiftRight(p: DoubleArray, places: Int): DoubleArray {
     if (places <= 0) return p
     val pd = polyDegree(p)
     if (pd + places >= p.size) {
-        throw IAE("The number of places to be shifted is too large")
+        throw IAE("Количество мест для смещения слишком велико")
     }
     val d = p.copyOf()
     for (i in pd downTo 0) {
@@ -51,12 +51,12 @@ fun polySubtract(p: DoubleArray, s: DoubleArray) {
 
 fun polyLongDiv(n: DoubleArray, d: DoubleArray): Solution {
     if (n.size != d.size) {
-        throw IAE("Numerator and denominator vectors must have the same size")
+        throw IAE("Векторы числителя и знаменателя должны иметь одинаковый размер")
     }
     var nd = polyDegree(n)
     val dd = polyDegree(d)
     if (dd < 0) {
-        throw IAE("Divisor must have at least one one-zero coefficient")
+        throw IAE("Делитель должен иметь хотя бы один нулевой коэффициент")
     }
     if (nd < dd) {
         throw IAE("Степень делителя не может быть больше степени числителя.\n")
@@ -79,8 +79,8 @@ fun polyShow(p: DoubleArray) {
         val coeff = p[i]
         if (coeff == 0.0) continue
         print (when {
-            coeff ==  1.0  -> if (i < pd) " + $coeff " else ""
-            coeff == -1.0  -> if (i < pd) " - " else "-"
+            coeff ==  1.0  -> if (i < pd) " + $coeff" else ""
+            coeff == -1.0  -> if (i < pd) " - ${-coeff}" else ""
             coeff <   0.0  -> if (i < pd) " - ${-coeff}" else "$coeff"
             else           -> if (i < pd) " + $coeff" else "$coeff"
         })
@@ -90,20 +90,38 @@ fun polyShow(p: DoubleArray) {
     println()
 }
 
-fun main() {
-    var text1 = readLine()?.replace("(?<!\\d)x".toRegex() ,"1")
-    text1 = text1?.replace("x", "")
-    val ar1 = text1?.split("\\^\\d?|(?<!\\^\\d)\\+".toRegex())?.reversed()?.toTypedArray()
-    val n = ar1?.map { it.toDouble() }!!.toDoubleArray()
+fun equationToList(equation: String): DoubleArray {
+    val maxdegree = ((Regex("(?<=\\^)\\d+").find(equation, 0))!!.value)
+    val ArrayOfZeros = Array<Int>(maxdegree.toInt()+1,{0})
 
-    var text2 = readLine()?.replace("(?<!\\d)x".toRegex() ,"1")
-    text2 = text2?.replace("x", "")
-    val ar2 = text2?.split("\\^\\d?|(?<!\\^\\d)\\+".toRegex())?.reversed()?.toTypedArray()
-    var d = ar2?.map { it.toDouble() }!!.toDoubleArray()
+    var test = (Regex("(?<=\\^)\\d+").findAll(equation, 0).map{ it.groupValues[0] }.toList())
+
+    if (Regex("x(?!.*\\^)").containsMatchIn(equation)) test += "1"
+    if (Regex("\\+\\d+\$|-\\d+\$").containsMatchIn(equation)) test += "0"
+
+    val test2 = Regex("\\d+(?=\\^)|\\d+(?=x)|\\+\\d+|-\\d+").findAll(equation.replace("(?<!\\d)x".toRegex() ,"1"), 0).map{ it.groupValues[0] }.toList()
+
+
+    for (i in 0 until  test2.size) {
+        ArrayOfZeros[maxdegree.toInt()-test[i].toInt()] = test2[i].toInt()
+    }
+
+    return (ArrayOfZeros.reversedArray()).map { it.toDouble() }.toDoubleArray()
+
+}
+
+fun main() {
+
+    val text1 = "x^5+3x^4+x^3+x^2+3x+1"
+    val text2 = "x^4+2x^3+x+2"
+
+    val n = equationToList(text1)
+
+    var d = equationToList(text2)
 
     if (d.size<n.size) for (i in 1..(n.size-d.size)) d += 0.0
 
-    println(d.joinToString())
+
     print("Числитель   : ")
     polyShow(n)
     print("Делитель    : ")
